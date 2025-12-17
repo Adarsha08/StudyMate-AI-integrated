@@ -1,68 +1,142 @@
 import React, { useState, useEffect } from "react";
 
 const Mynotes = () => {
-  const [notes, setNotes] = useState([]);   // stores all notes
-  const [input, setInput] = useState("");   // input box value
+  const [notes, setNotes] = useState([]);
+  const [input, setInput] = useState("");
+  const [showInput, setShowInput] = useState(false);
+  const [editId, setEditId] = useState(null);
 
-  // Fetch existing notes when component loads
+  // Fetch notes from backend
   useEffect(() => {
     fetch("http://localhost:3000/api/notes")
       .then(res => res.json())
-      .then(data => {
-        // Backend might send { notes: [...] } or just [...]
-        if (Array.isArray(data)) {
-          setNotes(data);
-        } else if (Array.isArray(data.notes)) {
-          setNotes(data.notes);
-        } else {
-          setNotes([]); // fallback
-        }
-      })
+      .then(data => setNotes(data.notes))
       .catch(err => console.error("Error fetching notes:", err));
   }, []);
 
-  // Add a new note
-  const addNote = () => {
-    if (!input) return; // prevent empty notes
+  // Add or edit note
+  const handleAddOrEdit = () => {
+    if (!input) return;
 
-    fetch("http://localhost:3000/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ note: input }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        // Backend might send full array or single note
-        if (Array.isArray(data)) {
-          setNotes(data);
-        } else if (Array.isArray(data.notes)) {
-          setNotes(data.notes);
-        } else if (data.note) {
-          // append single note to existing notes
-          setNotes(prevNotes => [...prevNotes, data]);
-        }
-        setInput(""); // clear input
+    if (editId) {
+      // Edit note
+      fetch(`http://localhost:3000/api/notes/${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: input }),
       })
-      .catch(err => console.error("Error adding note:", err));
+        .then(res => res.json())
+        .then(data => {
+          setNotes(data.notes);
+          setInput("");
+          setEditId(null);
+          setShowInput(false);
+        })
+        .catch(err => console.error("Error editing note:", err));
+    } else {
+      // Add note
+      fetch("http://localhost:3000/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: input }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          setNotes(data.notes);
+          setInput("");
+          setShowInput(false);
+        })
+        .catch(err => console.error("Error adding note:", err));
+    }
+  };
+
+  // Delete note
+  const handleDelete = (id) => {
+    fetch(`http://localhost:3000/api/notes/${id}`, { method: "DELETE" })
+      .then(res => res.json())
+      .then(data => setNotes(data.notes))
+      .catch(err => console.error("Error deleting note:", err));
+  };
+
+  // Start editing
+  const handleEdit = (note) => {
+    setInput(note.note);
+    setEditId(note.id);
+    setShowInput(true);
+  };
+
+  // Cancel / Back button
+  const handleCancel = () => {
+    setInput("");
+    setEditId(null);
+    setShowInput(false);
   };
 
   return (
-    <div className="notes-container">
-      <h2>StudyMate Notes</h2>
+    <div className="min-h-screen bg-gray-900 p-8">
+      {/* Header + Add Button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-white">Your Notes</h2>
+        {!showInput && (
+          <button
+            onClick={() => setShowInput(true)}
+            className="bg-blue-500 cursor-pointer text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200"
+          >
+            + Add Note
+          </button>
+        )}
+      </div>
 
-      <input
-        type="text"
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        placeholder="Type your note"
-      />
-      <button onClick={addNote}>Add Note</button>
+      {/* Input Box */}
+      {showInput && (
+        <div className="flex border-2 mb-6 gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Type your note"
+            className="flex-1 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            onClick={handleAddOrEdit}
+            className="bg-blue-500 cursor-pointer text-white px-4 rounded hover:bg-blue-600 transition-colors duration-200"
+          >
+            {editId ? "Save" : "Add"}
+          </button>
+          <button
+            onClick={handleCancel}
+            className="bg-gray-500 cursor-pointer text-white px-4 rounded hover:bg-gray-600 transition-colors duration-200"
+          >
+            Back
+          </button>
+        </div>
+      )}
 
-      <ul>
-        {Array.isArray(notes) && notes.map((n, index) => (
-          <li key={index}>{n.note}</li>
+      {/* Notes Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {notes.map(n => (
+          <div
+            key={n.id}
+            className="p-4 bg-gray-800 text-white rounded shadow hover:bg-gray-700 transition-colors duration-200 min-h-[100px] flex flex-col justify-between"
+          >
+            <span>{n.note}</span>
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={() => handleEdit(n)}
+                className="text-blue-400 cursor-pointer hover:text-blue-600 font-semibold text-sm"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(n.id)}
+                className="text-red-400 curosr-pointer hover:text-red-600 font-semibold text-sm"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };
