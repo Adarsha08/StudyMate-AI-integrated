@@ -1,45 +1,54 @@
-const { v4: uuidv4 } = require("uuid");
-const notes = require("../Models/Note");
+const Note = require("../Models/Note"); // Your Mongoose model
 
 // Get all notes
-exports.getNotes = (req, res) => {
-  res.json({ notes });
+exports.getNotes = async (req, res) => {
+  try {
+    const notes = await Note.find().sort({ createdAt: -1 }); // get all notes from DB
+    res.json({ notes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // Add note
-exports.addNote = (req, res) => {
-  const { note } = req.body;
-  if (!note) {
-    return res.status(400).json({ error: "Note content is required" });
-  }
+exports.addNote = async (req, res) => {
+  try {
+    const { note } = req.body;
+    if (!note) return res.status(400).json({ error: "Note content is required" });
 
-  const newNote = { id: uuidv4(), note };
-  notes.push(newNote);
-  res.json({ message: "Note added successfully", notes });
+    const newNote = new Note({ note });
+    await newNote.save();
+
+    res.json({ message: "Note added successfully", notes: await Note.find() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // Update note
-exports.updateNote = (req, res) => {
-  const { id } = req.params;
-  const { note } = req.body;
+exports.updateNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
 
-  const index = notes.findIndex(n => n.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: "Note not found" });
+    const updatedNote = await Note.findByIdAndUpdate(id, { note }, { new: true });
+    if (!updatedNote) return res.status(404).json({ error: "Note not found" });
+
+    res.json({ message: "Note updated successfully", notes: await Note.find() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  notes[index].note = note;
-  res.json({ message: "Note updated successfully", notes });
 };
 
 // Delete note
-exports.deleteNote = (req, res) => {
-  const { id } = req.params;
-  const index = notes.findIndex(n => n.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: "Note not found" });
-  }
+exports.deleteNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedNote = await Note.findByIdAndDelete(id);
+    if (!deletedNote) return res.status(404).json({ error: "Note not found" });
 
-  notes.splice(index, 1);
-  res.json({ message: "Note deleted successfully", notes });
+    res.json({ message: "Note deleted successfully", notes: await Note.find() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };

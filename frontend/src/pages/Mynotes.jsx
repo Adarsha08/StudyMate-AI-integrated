@@ -7,61 +7,69 @@ const Mynotes = () => {
   const [editId, setEditId] = useState(null);
 
   // Fetch notes from backend
+  const fetchNotes = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/notes");
+      const data = await res.json();
+      setNotes(data.notes || []); // safe fallback
+    } catch (err) {
+      console.error("Error fetching notes:", err);
+    }
+  };
+
   useEffect(() => {
-    fetch("http://localhost:3000/api/notes")
-      .then(res => res.json())
-      .then(data => setNotes(data.notes))
-      .catch(err => console.error("Error fetching notes:", err));
+    fetchNotes();
   }, []);
 
   // Add or edit note
-  const handleAddOrEdit = () => {
+  const handleAddOrEdit = async () => {
     if (!input) return;
 
-    if (editId) {
-      // Edit note
-      fetch(`http://localhost:3000/api/notes/${editId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note: input }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setNotes(data.notes);
-          setInput("");
-          setEditId(null);
-          setShowInput(false);
-        })
-        .catch(err => console.error("Error editing note:", err));
-    } else {
-      // Add note
-      fetch("http://localhost:3000/api/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note: input }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          setNotes(data.notes);
-          setInput("");
-          setShowInput(false);
-        })
-        .catch(err => console.error("Error adding note:", err));
+    try {
+      if (editId) {
+        // Edit note
+        const res = await fetch(`http://localhost:3000/api/notes/${editId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ note: input }),
+        });
+        const data = await res.json();
+        setNotes(data.notes || []);
+        setInput("");
+        setEditId(null);
+        setShowInput(false);
+      } else {
+        // Add note
+        const res = await fetch("http://localhost:3000/api/notes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ note: input }),
+        });
+        const data = await res.json();
+        setNotes(data.notes || []);
+        setInput("");
+        setShowInput(false);
+      }
+    } catch (err) {
+      console.error("Error adding/editing note:", err);
     }
   };
 
   // Delete note
-  const handleDelete = (id) => {
-    fetch(`http://localhost:3000/api/notes/${id}`, { method: "DELETE" })
-      .then(res => res.json())
-      .then(data => setNotes(data.notes))
-      .catch(err => console.error("Error deleting note:", err));
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/notes/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      setNotes(data.notes || []);
+    } catch (err) {
+      console.error("Error deleting note:", err);
+    }
   };
 
   // Start editing
   const handleEdit = (note) => {
     setInput(note.note);
-    setEditId(note.id);
+    setEditId(note._id); // use _id from MongoDB
     setShowInput(true);
   };
 
@@ -93,7 +101,7 @@ const Mynotes = () => {
           <input
             type="text"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Type your note"
             className="flex-1 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
@@ -114,9 +122,9 @@ const Mynotes = () => {
 
       {/* Notes Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {notes.map(n => (
+        {(notes || []).map((n) => (
           <div
-            key={n.id}
+            key={n._id}
             className="p-4 bg-gray-800 text-white rounded shadow hover:bg-gray-700 transition-colors duration-200 min-h-[100px] flex flex-col justify-between"
           >
             <span>{n.note}</span>
@@ -128,8 +136,8 @@ const Mynotes = () => {
                 Edit
               </button>
               <button
-                onClick={() => handleDelete(n.id)}
-                className="text-red-400 curosr-pointer hover:text-red-600 font-semibold text-sm"
+                onClick={() => handleDelete(n._id)}
+                className="text-red-400 cursor-pointer hover:text-red-600 font-semibold text-sm"
               >
                 Delete
               </button>
