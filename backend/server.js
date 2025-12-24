@@ -4,11 +4,14 @@ const port = 3000;
 const cors = require("cors");
 
 
+
 app.use(cors());
 app.use(express.json());
 
 const noteRoutes=require('./Routes/noteRoutes');
 app.use('/api/notes',noteRoutes);
+
+app.use('/api/auth',require('./Routes/userRoutes'));
 
 
 

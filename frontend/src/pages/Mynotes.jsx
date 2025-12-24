@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const Mynotes = () => {
   const [notes, setNotes] = useState([]);
@@ -6,12 +7,23 @@ const Mynotes = () => {
   const [showInput, setShowInput] = useState(false);
   const [editId, setEditId] = useState(null);
 
+  // Get JWT token from localStorage
+  const token = localStorage.getItem("token");
+
+  // Axios instance with Authorization header
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:3000/api/notes",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
   // Fetch notes from backend
   const fetchNotes = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/notes");
-      const data = await res.json();
-      setNotes(data.notes || []); // safe fallback
+      const { data } = await axiosInstance.get("/");
+      setNotes(data.notes || []);
     } catch (err) {
       console.error("Error fetching notes:", err);
     }
@@ -28,24 +40,14 @@ const Mynotes = () => {
     try {
       if (editId) {
         // Edit note
-        const res = await fetch(`http://localhost:3000/api/notes/${editId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ note: input }),
-        });
-        const data = await res.json();
+        const { data } = await axiosInstance.put(`/${editId}`, { note: input });
         setNotes(data.notes || []);
         setInput("");
         setEditId(null);
         setShowInput(false);
       } else {
         // Add note
-        const res = await fetch("http://localhost:3000/api/notes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ note: input }),
-        });
-        const data = await res.json();
+        const { data } = await axiosInstance.post("/", { note: input });
         setNotes(data.notes || []);
         setInput("");
         setShowInput(false);
@@ -58,8 +60,7 @@ const Mynotes = () => {
   // Delete note
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/notes/${id}`, { method: "DELETE" });
-      const data = await res.json();
+      const { data } = await axiosInstance.delete(`/${id}`);
       setNotes(data.notes || []);
     } catch (err) {
       console.error("Error deleting note:", err);
@@ -69,7 +70,7 @@ const Mynotes = () => {
   // Start editing
   const handleEdit = (note) => {
     setInput(note.note);
-    setEditId(note._id); // use _id from MongoDB
+    setEditId(note._id); // MongoDB uses _id
     setShowInput(true);
   };
 
