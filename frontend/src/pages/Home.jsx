@@ -2,7 +2,8 @@ import React from 'react'
 import Navbar from '../components/Navbar.jsx'
 import {Routes, Route,} from 'react-router-dom'
 import Mynotes from './Mynotes.jsx'
-import Login  from './Login.jsx'
+import Profile from './Profile.jsx'
+
 
 
 
@@ -14,11 +15,11 @@ const Home = () => {
           <Navbar />
         </div>
         
-        <div className=" bg-[#1E1E1E] w-full text-white p-3 h-screen overflow-y-auto" >
+        <div //main content area//
+        className=" bg-[#1E1E1E] w-full text-white p-3 h-screen overflow-y-auto" >
           <Routes>
             <Route path="/" element={<Mynotes/>} />
-            <Route path="/login" element={<Login/>} />
-            
+            <Route path="/profile" element={<Profile/>} />
           </Routes>
         </div>
       </div>

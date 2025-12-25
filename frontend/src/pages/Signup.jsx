@@ -3,13 +3,14 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
 const Signup = () => {
+  //defining the state variables for name,email,password
   const [name, setname] = useState("");
   const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
 
-  const navigate = useNavigate();
+  const navigate = useNavigate();//hook to navigate programmatically
 
-  const handleChange = async (e) => {
+  const handleChange = async (e) => {//function to handle form submission and register user to check if the field are empty
     e.preventDefault();
 
     if (!name || !email || !password) {
@@ -18,6 +19,7 @@ const Signup = () => {
     }
 
     try {
+      //api call to register user
       const result = await axios.post(
         "http://localhost:3000/api/auth/register",
         { name, email, password }
@@ -30,7 +32,7 @@ const Signup = () => {
       setemail("");
       setpassword("");
 
-      navigate("/login"); // ✅ correct navigation
+      navigate("/login"); // redirect to login page after successful registration
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.error || "Registration failed");
@@ -38,6 +40,7 @@ const Signup = () => {
   };
 
   return (
+    //form for user registration
     <div className="flex items-center justify-center min-h-screen bg-black">
       <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold text-center mb-6">Register</h2>
@@ -92,8 +95,8 @@ const Signup = () => {
           <p className="text-sm text-center text-gray-600">
             Already have an account?
           </p>
-
-          <Link
+ 
+          <Link   //link to login page//
             to="/login"
             className="block w-full py-2 border border-green-500 text-green-600 rounded-lg text-center"
           >

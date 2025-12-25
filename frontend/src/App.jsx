@@ -7,12 +7,12 @@ function App() {
 
 
   return (
+      //useRoutes hook to define application routes
     <>
-      
         <Routes>
-          <Route path='/' element={<Signup />} />
-          <Route path='/login' element={<Login />} />
-          <Route path='/home' element={<Home />} />
+          <Route path='/' element={<Signup />} />//first register
+          <Route path='/login' element={<Login />} />//then login
+          <Route path='/home/*' element={<Home />} />//then the main app
         </Routes>
       
     </>

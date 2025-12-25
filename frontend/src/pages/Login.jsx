@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "axios";//importing axios for api calls
 import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -11,26 +11,26 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault(); // ✅ prevent reload
 
-    // ✅ correct validation
+    // ✅ validate inputs
     if (!email || !password) {
       alert("Please fill all the fields");
       return;
     }
 
-    try {
+    try {//api call to login user
       const result = await axios.post(
         "http://localhost:3000/api/auth/login",
         { email, password }
       );
 
-      // ✅ store JWT
+      //store token in local storage for authentication in subsequent requests 
       localStorage.setItem("token", result.data.token);
 
       setemail("");
       setpassword("");
 
       alert("Login successful");
-      navigate("/home"); // ✅ redirect after login
+      navigate("/home"); // redirect to home page after successful login
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.error || "Login failed");
@@ -38,6 +38,7 @@ const Login = () => {
   };
 
   return (
+    //form for user login
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 to-purple-600">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
@@ -77,7 +78,8 @@ const Login = () => {
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Don’t have an account?{" "}
-          <Link to="/" className="text-indigo-500 hover:underline">
+          <Link //link  to registration page//
+          to="/" className="text-indigo-500 hover:underline">
             Register
           </Link>
         </p>
