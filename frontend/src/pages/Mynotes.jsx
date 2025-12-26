@@ -82,7 +82,7 @@ const Mynotes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
+    <div className="min-h-screen bg-gradient-to-r from-blue-900 to-gray-900 p-8">
       {/* Header + Add Button */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-white">Your Notes</h2>

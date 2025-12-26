@@ -1,49 +1,68 @@
 import React, { useState } from "react";
-import axios from "axios";//importing axios for api calls
+import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
-const Login = () => {
-  const [email, setemail] = useState("");
-  const [password, setpassword] = useState("");
+// Alert component
+const Alert = ({ message, type }) => (
+  <div
+    className={`fixed top-5 right-5 px-4 py-3 rounded-lg text-white shadow-lg z-50
+      ${type === "success" ? "bg-green-600" : "bg-red-600"}
+    `}
+  >
+    {message}
+  </div>
+);
 
-  const navigate = useNavigate(); // ✅ correct usage
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [alert, setAlert] = useState({ show: false, message: "", type: "" });
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // ✅ prevent reload
+    e.preventDefault();
+    setLoading(true);
 
-    // ✅ validate inputs
     if (!email || !password) {
-      alert("Please fill all the fields");
+      setAlert({ show: true, message: "Please fill all the fields", type: "error" });
+      setTimeout(() => setAlert({ show: false, message: "", type: "" }), 1500);
+      setLoading(false);
       return;
     }
 
-    try {//api call to login user
-      const result = await axios.post(
-        "http://localhost:3000/api/auth/login",
-        { email, password }
-      );
+    try {
+      const result = await axios.post("http://localhost:3000/api/auth/login", { email, password });
+      const token = result.data.token;
 
-      //store token in local storage for authentication in subsequent requests 
-      localStorage.setItem("token", result.data.token);
+      if (!token) {
+        setAlert({ show: true, message: "Login failed: no token returned", type: "error" });
+        setLoading(false);
+        return;
+      }
 
-      setemail("");
-      setpassword("");
+      localStorage.setItem("token", token);
+      setAlert({ show: true, message: "Login successful 🎉", type: "success" });
 
-      alert("Login successful");
-      navigate("/home"); // redirect to home page after successful login
+      setTimeout(() => {
+        navigate("/home");
+      }, 1500);
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.error || "Login failed");
+      setAlert({ show: true, message: err.response?.data?.error || "Login failed", type: "error" });
+    } finally {
+      setLoading(false);
+      setTimeout(() => {
+        setAlert({ show: false, message: "", type: "" });
+      }, 3000);
     }
   };
 
   return (
-    //form for user login
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 to-purple-600">
+      {alert.show && <Alert message={alert.message} type={alert.type} />}
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Login
-        </h2>
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Login</h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -52,7 +71,7 @@ const Login = () => {
               type="email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => setemail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg"
             />
           </div>
@@ -63,23 +82,31 @@ const Login = () => {
               type="password"
               placeholder="Enter your password"
               value={password}
-              onChange={(e) => setpassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-indigo-500 text-white py-2 rounded-lg font-semibold hover:bg-indigo-600"
+            disabled={loading}
+            className={`w-full py-2 cursor-pointer rounded-lg font-semibold text-white
+              ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-500 hover:bg-indigo-600"}
+            `}
           >
-            Login
+            {loading ? (
+              <div className="flex justify-center">
+                <div className="h-5 w-5 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Don’t have an account?{" "}
-          <Link //link  to registration page//
-          to="/" className="text-indigo-500 hover:underline">
+          <Link to="/" className="text-indigo-500 hover:underline">
             Register
           </Link>
         </p>
